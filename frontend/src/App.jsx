@@ -247,7 +247,7 @@ export default function App() {
       <footer className="app-footer">
         <div className="footer-left">
           <span className="footer-credit">
-            Made with <span style={{ color: '#f85149' }}>♥</span> by <strong>Avichal Yadav</strong>
+            Made by <strong>Avichal Yadav</strong>, 2501667, MTech CS
           </span>
         </div>
         <div className="footer-right">
