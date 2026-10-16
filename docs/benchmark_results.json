@@ -1,0 +1,178 @@
+{
+  "gaussian": {
+    "avg_time_sec": 0.0028,
+    "avg_psnr": 21.16,
+    "avg_ssim": 0.4359,
+    "avg_edge_preservation": 0.8288,
+    "samples_count": 5,
+    "per_image": [
+      {
+        "image_name": "01_small_text",
+        "time_sec": 0.0105,
+        "psnr": 19.5966,
+        "ssim": 0.3694,
+        "edge_preservation_score": 0.9134
+      },
+      {
+        "image_name": "02_spreadsheet",
+        "time_sec": 0.0011,
+        "psnr": 20.5394,
+        "ssim": 0.3348,
+        "edge_preservation_score": 0.6446
+      },
+      {
+        "image_name": "03_ui_elements",
+        "time_sec": 0.0008,
+        "psnr": 21.1543,
+        "ssim": 0.4162,
+        "edge_preservation_score": 0.7536
+      },
+      {
+        "image_name": "04_code_editor",
+        "time_sec": 0.0007,
+        "psnr": 25.1695,
+        "ssim": 0.5884,
+        "edge_preservation_score": 0.8508
+      },
+      {
+        "image_name": "05_geometric_shapes",
+        "time_sec": 0.0008,
+        "psnr": 19.3594,
+        "ssim": 0.4709,
+        "edge_preservation_score": 0.9817
+      }
+    ]
+  },
+  "fft": {
+    "avg_time_sec": 0.0422,
+    "avg_psnr": 23.83,
+    "avg_ssim": 0.5133,
+    "avg_edge_preservation": 0.9212,
+    "samples_count": 5,
+    "per_image": [
+      {
+        "image_name": "01_small_text",
+        "time_sec": 0.0421,
+        "psnr": 23.4131,
+        "ssim": 0.4766,
+        "edge_preservation_score": 0.977
+      },
+      {
+        "image_name": "02_spreadsheet",
+        "time_sec": 0.04,
+        "psnr": 22.9129,
+        "ssim": 0.4352,
+        "edge_preservation_score": 0.9393
+      },
+      {
+        "image_name": "03_ui_elements",
+        "time_sec": 0.0362,
+        "psnr": 23.698,
+        "ssim": 0.4893,
+        "edge_preservation_score": 0.9024
+      },
+      {
+        "image_name": "04_code_editor",
+        "time_sec": 0.0439,
+        "psnr": 30.0055,
+        "ssim": 0.6469,
+        "edge_preservation_score": 0.9972
+      },
+      {
+        "image_name": "05_geometric_shapes",
+        "time_sec": 0.0489,
+        "psnr": 19.1175,
+        "ssim": 0.5187,
+        "edge_preservation_score": 0.79
+      }
+    ]
+  },
+  "wavelet": {
+    "avg_time_sec": 0.0115,
+    "avg_psnr": 24.08,
+    "avg_ssim": 0.4976,
+    "avg_edge_preservation": 0.8646,
+    "samples_count": 5,
+    "per_image": [
+      {
+        "image_name": "01_small_text",
+        "time_sec": 0.0134,
+        "psnr": 22.8926,
+        "ssim": 0.4613,
+        "edge_preservation_score": 0.9378
+      },
+      {
+        "image_name": "02_spreadsheet",
+        "time_sec": 0.0112,
+        "psnr": 22.4579,
+        "ssim": 0.3924,
+        "edge_preservation_score": 0.6843
+      },
+      {
+        "image_name": "03_ui_elements",
+        "time_sec": 0.011,
+        "psnr": 23.4307,
+        "ssim": 0.4682,
+        "edge_preservation_score": 0.8222
+      },
+      {
+        "image_name": "04_code_editor",
+        "time_sec": 0.0111,
+        "psnr": 28.8068,
+        "ssim": 0.6282,
+        "edge_preservation_score": 0.939
+      },
+      {
+        "image_name": "05_geometric_shapes",
+        "time_sec": 0.0109,
+        "psnr": 22.8159,
+        "ssim": 0.5379,
+        "edge_preservation_score": 0.9398
+      }
+    ]
+  },
+  "edge_aware": {
+    "avg_time_sec": 0.0353,
+    "avg_psnr": 26.24,
+    "avg_ssim": 0.6153,
+    "avg_edge_preservation": 0.8782,
+    "samples_count": 5,
+    "per_image": [
+      {
+        "image_name": "01_small_text",
+        "time_sec": 0.0413,
+        "psnr": 24.6169,
+        "ssim": 0.55,
+        "edge_preservation_score": 0.9215
+      },
+      {
+        "image_name": "02_spreadsheet",
+        "time_sec": 0.034,
+        "psnr": 23.9415,
+        "ssim": 0.5123,
+        "edge_preservation_score": 0.7894
+      },
+      {
+        "image_name": "03_ui_elements",
+        "time_sec": 0.0322,
+        "psnr": 24.9762,
+        "ssim": 0.5745,
+        "edge_preservation_score": 0.8717
+      },
+      {
+        "image_name": "04_code_editor",
+        "time_sec": 0.0333,
+        "psnr": 33.2385,
+        "ssim": 0.8352,
+        "edge_preservation_score": 0.9772
+      },
+      {
+        "image_name": "05_geometric_shapes",
+        "time_sec": 0.0358,
+        "psnr": 24.4039,
+        "ssim": 0.6047,
+        "edge_preservation_score": 0.8314
+      }
+    ]
+  }
+}

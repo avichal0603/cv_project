@@ -1,0 +1,17 @@
+{
+  "proposed_full": {
+    "avg_psnr": 26.22,
+    "avg_ssim": 0.611,
+    "avg_edge_f1": 0.8919
+  },
+  "ablation_no_edge_mask": {
+    "avg_psnr": 27.7,
+    "avg_ssim": 0.6857,
+    "avg_edge_f1": 0.891
+  },
+  "ablation_guided_only": {
+    "avg_psnr": 24.68,
+    "avg_ssim": 0.9062,
+    "avg_edge_f1": 0.8432
+  }
+}
