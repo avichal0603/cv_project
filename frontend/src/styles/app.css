@@ -187,8 +187,40 @@ html, body, #root {
 .dashboard-layout {
   display: grid;
   grid-template-columns: 360px 1fr 340px;
-  height: calc(100vh - 52px);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
+}
+
+/* App Footer */
+.app-footer {
+  height: 32px;
+  min-height: 32px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  z-index: 20;
+}
+
+.footer-credit strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.footer-divider {
+  color: var(--border-color);
 }
 
 @media (max-width: 1200px) {

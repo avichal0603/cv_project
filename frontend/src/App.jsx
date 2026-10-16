@@ -242,6 +242,20 @@ export default function App() {
           />
         </aside>
       </div>
+
+      {/* Bottom Footer */}
+      <footer className="app-footer">
+        <div className="footer-left">
+          <span className="footer-credit">
+            Made with <span style={{ color: '#f85149' }}>♥</span> by <strong>Avichal Yadav</strong>
+          </span>
+        </div>
+        <div className="footer-right">
+          <span className="footer-tag">Computer Vision Lab</span>
+          <span className="footer-divider">•</span>
+          <span className="footer-tag">Screen Moiré Demoireing Studio</span>
+        </div>
+      </footer>
     </div>
   );
 }
