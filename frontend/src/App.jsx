@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useImageProcessor } from './hooks/useImageProcessor';
 import ImageUpload from './components/ImageUpload';
-import AlgorithmPanel from './components/AlgorithmPanel';
-import ParameterControls from './components/ParameterControls';
-import ProcessingControls from './components/ProcessingControls';
 import ComparisonSlider from './components/ComparisonSlider';
-import CompareGrid from './components/CompareGrid';
 import AnalysisPanel from './components/AnalysisPanel';
-import SpectrumView from './components/SpectrumView';
 import ExportPanel from './components/ExportPanel';
 import './styles/app.css';
 
@@ -16,11 +11,6 @@ export default function App() {
     originalImage,
     processedImage,
     referenceImage,
-    spectrumImage,
-    comparisonResults,
-    algorithms,
-    selectedAlgorithm,
-    params,
     loading,
     loadingStatus,
     error,
@@ -29,43 +19,14 @@ export default function App() {
     history,
     setOriginalImage,
     setReferenceImage,
-    selectAlgorithm,
-    updateParam,
-    resetParams,
     processImage,
     evaluateImage,
-    compareAll,
-    fetchSpectrum,
     cancelProcessing,
-    selectHistoricalResult,
-    setProcessedImage,
-    fetchAlgorithms
+    selectHistoricalResult
   } = useImageProcessor();
 
-  const [viewMode, setViewMode] = useState('slider'); // 'slider' | 'compare'
-
-  const currentAlgoDef = algorithms.find(a => a.id === selectedAlgorithm) || algorithms[0];
-
-  const handleCompareAllClick = async () => {
-    setViewMode('compare');
-    await compareAll();
-  };
-
-  const handleSelectCompareResult = (result) => {
-    setProcessedImage({
-      dataUrl: result.output_image,
-      algorithm: result.algorithm,
-      algorithmName: result.name || result.algorithm,
-      params: {},
-      processingTime: result.processing_time
-    });
-    selectAlgorithm(result.algorithm);
-    setViewMode('slider');
-  };
-
-  const handleSelectHistoryItem = (item) => {
-    selectHistoricalResult(item);
-    setViewMode('slider');
+  const handleProcessClick = () => {
+    processImage('auto_demoire', {});
   };
 
   const handleReevaluate = () => {
@@ -76,17 +37,17 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Top Navigation Bar */}
+      {/* Top Header */}
       <header className="app-header">
         <div className="header-brand">
           <div className="header-icon">M</div>
           <div className="header-title-group">
             <h1>
-              Screen Moiré Demoireing Studio
+              Screen Moiré Removal System
               <span className="header-version">CV LAB</span>
             </h1>
             <div className="header-subtitle">
-              High-Fidelity Artifact Elimination & Frequency Notch Filtering
+              Automated Screen Photograph Enhancement & Artifact Removal
             </div>
           </div>
         </div>
@@ -94,138 +55,162 @@ export default function App() {
         <div className="header-actions">
           <div
             className={`status-badge ${backendStatus}`}
-            title={
-              backendStatus === 'online'
-                ? 'Connected to FastAPI backend at http://localhost:8000'
-                : backendStatus === 'offline'
-                ? 'Backend offline (using built-in algorithms). Run FastAPI server on port 8000.'
-                : 'Verifying backend connection...'
-            }
+            title={backendStatus === 'online' ? 'System backend running on localhost:8000' : 'Backend offline'}
           >
             <span className="status-dot"></span>
-            <span>Backend: {backendStatus.toUpperCase()}</span>
+            <span>System: {backendStatus.toUpperCase()}</span>
           </div>
         </div>
       </header>
 
-      {/* Main Layout Grid */}
+      {/* Main Workspace Layout */}
       <div className="dashboard-layout">
-        {/* Left Sidebar: Controls & Inputs */}
+        {/* Left Sidebar: Upload & 1-Click Action */}
         <aside className="sidebar left-sidebar">
-          {/* File / Camera Upload */}
+          {/* Upload Dropzone */}
           <ImageUpload
             imageInfo={originalImage}
             onImageSelect={setOriginalImage}
             onImageRemove={() => setOriginalImage(null)}
           />
 
-          {/* Algorithm Selection */}
-          <AlgorithmPanel
-            algorithms={algorithms}
-            selectedAlgorithm={selectedAlgorithm}
-            onSelectAlgorithm={selectAlgorithm}
-            backendStatus={backendStatus}
-            onRefresh={fetchAlgorithms}
-          />
+          {/* Action Card */}
+          <div className="sidebar-section auto-card" style={{
+            background: 'linear-gradient(180deg, rgba(31, 111, 235, 0.12) 0%, rgba(22, 27, 34, 0.8) 100%)',
+            border: '1px solid rgba(88, 166, 255, 0.35)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-color)', fontWeight: 700 }}>
+                Automated Processing
+              </span>
+              <span style={{
+                background: 'rgba(63, 185, 80, 0.18)',
+                color: 'var(--success-color)',
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontWeight: 600
+              }}>
+                Ready
+              </span>
+            </div>
 
-          {/* Dynamic Hyperparameters */}
-          <ParameterControls
-            algorithm={currentAlgoDef}
-            params={params}
-            onParamChange={updateParam}
-            onResetDefaults={resetParams}
-          />
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+              Automatically detects and eliminates screen moiré patterns while preserving text legibility and fine borders.
+            </div>
 
-          {/* Primary Action Buttons */}
-          <ProcessingControls
-            hasImage={Boolean(originalImage)}
-            loading={loading}
-            loadingStatus={loadingStatus}
-            error={error}
-            onProcess={() => {
-              setViewMode('slider');
-              processImage();
-            }}
-            onCompareAll={handleCompareAllClick}
-            onCancel={cancelProcessing}
-            onRetry={() => processImage()}
-          />
+            <button
+              className="btn btn-primary"
+              disabled={!originalImage || loading}
+              onClick={handleProcessClick}
+              style={{
+                padding: '13px',
+                fontSize: '14px',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #1f6feb 0%, #238636 100%)',
+                borderColor: '#388bfd',
+                boxShadow: originalImage ? '0 0 16px rgba(31, 111, 235, 0.4)' : 'none',
+                cursor: originalImage ? 'pointer' : 'not-allowed'
+              }}
+            >
+              {loading ? '⏳ Removing Moiré...' : '✨ Remove Screen Moiré'}
+            </button>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              paddingTop: '8px',
+              borderTop: '1px solid var(--border-color)',
+              fontSize: '11px',
+              color: 'var(--text-muted)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Algorithm:</span>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Adaptive Moiré Filter</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Parameters:</span>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Auto-Calibrated</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Text Preservation:</span>
+                <span style={{ color: 'var(--success-color)', fontWeight: 500 }}>Active</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading status */}
+          {loading && (
+            <div className="processing-status-box" style={{ marginTop: 'auto' }}>
+              <div className="processing-spinner"></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '12px' }}>Processing Image</div>
+                <div style={{ fontSize: '11px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  {loadingStatus || 'Removing moiré interference...'}
+                </div>
+              </div>
+              <button
+                className="btn btn-sm btn-danger"
+                onClick={cancelProcessing}
+                title="Cancel processing"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="error-banner" style={{ marginTop: 'auto' }}>
+              <div style={{ fontWeight: 600, fontSize: '12px' }}>Processing Notice</div>
+              <div style={{ fontSize: '11px' }}>{error}</div>
+            </div>
+          )}
         </aside>
 
-        {/* Center Workspace: Comparison Slider / Grid */}
+        {/* Center Workspace: Split-screen comparison */}
         <main className="workspace-main">
-          {/* Toolbar */}
           <div className="workspace-toolbar">
             <div className="toolbar-left">
-              <div className="view-tabs">
-                <button
-                  className={`view-tab ${viewMode === 'slider' ? 'active' : ''}`}
-                  onClick={() => setViewMode('slider')}
-                >
-                  Comparison Slider
-                </button>
-                <button
-                  className={`view-tab ${viewMode === 'compare' ? 'active' : ''}`}
-                  onClick={() => setViewMode('compare')}
-                >
-                  Benchmark Grid {comparisonResults.length > 0 ? `(${comparisonResults.length})` : ''}
-                </button>
-              </div>
-
+              <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                Interactive Split Comparison
+              </span>
               {originalImage && (
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '10px' }}>
                   {originalImage.width} × {originalImage.height} px
                 </span>
               )}
             </div>
 
             <div className="toolbar-right">
-              {originalImage && (
-                <button
-                  className="btn btn-sm"
-                  onClick={() => fetchSpectrum()}
-                  title="Compute 2D FFT Magnitude Spectrum"
-                  style={{ fontSize: '11px' }}
-                >
-                  Analyze 2D FFT Spectrum
-                </button>
+              {processedImage && (
+                <span style={{ fontSize: '11px', color: 'var(--success-color)' }}>
+                  ✓ Demoiréing Complete ({processedImage.processingTime}s)
+                </span>
               )}
             </div>
           </div>
 
-          {/* Center Viewport */}
-          {viewMode === 'slider' ? (
-            <ComparisonSlider
-              originalSrc={originalImage ? originalImage.preview : null}
-              processedSrc={processedImage ? processedImage.dataUrl : null}
-              algorithmName={processedImage ? processedImage.algorithmName : (currentAlgoDef ? currentAlgoDef.name : '')}
-              dimensions={originalImage ? { width: originalImage.width, height: originalImage.height } : null}
-            />
-          ) : (
-            <CompareGrid
-              results={comparisonResults}
-              selectedAlgorithm={selectedAlgorithm}
-              onSelectResult={handleSelectCompareResult}
-              onBackToSlider={() => setViewMode('slider')}
-            />
-          )}
+          <ComparisonSlider
+            originalSrc={originalImage ? originalImage.preview : null}
+            processedSrc={processedImage ? processedImage.dataUrl : null}
+            algorithmName="Adaptive Demoiré Filter"
+            dimensions={originalImage ? { width: originalImage.width, height: originalImage.height } : null}
+          />
         </main>
 
         {/* Right Sidebar: Analysis & Export */}
         <aside className="sidebar right-sidebar">
-          {/* Export & Download */}
+          {/* Download & Export Buttons */}
           <ExportPanel
             originalSrc={originalImage ? originalImage.preview : null}
             processedImage={processedImage}
             originalName={originalImage ? originalImage.name : null}
-          />
-
-          {/* FFT Spectrum Display */}
-          <SpectrumView
-            spectrumImage={spectrumImage}
-            onRequestSpectrum={() => fetchSpectrum()}
-            hasImage={Boolean(originalImage)}
-            algorithm={selectedAlgorithm}
           />
 
           {/* Performance & Quality Metrics */}
@@ -238,7 +223,7 @@ export default function App() {
             onReevaluate={handleReevaluate}
             metrics={metrics}
             history={history}
-            onSelectHistory={handleSelectHistoryItem}
+            onSelectHistory={selectHistoricalResult}
           />
         </aside>
       </div>
@@ -247,13 +232,11 @@ export default function App() {
       <footer className="app-footer">
         <div className="footer-left">
           <span className="footer-credit">
-            Made by <strong>Avichal Yadav</strong>, 2501667, MTech CS
+            Computer Vision Practical • Made by <strong>Avichal Yadav</strong> (2501667, MTech CS)
           </span>
         </div>
         <div className="footer-right">
-          <span className="footer-tag">Computer Vision Lab</span>
-          <span className="footer-divider">•</span>
-          <span className="footer-tag">Screen Moiré Demoireing Studio</span>
+          <span className="footer-tag">CSM043 Coursework</span>
         </div>
       </footer>
     </div>

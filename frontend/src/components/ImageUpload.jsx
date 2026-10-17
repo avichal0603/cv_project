@@ -71,7 +71,7 @@ export default function ImageUpload({ imageInfo, onImageSelect, onImageRemove })
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/png, image/jpeg, image/webp"
+        accept="image/png, image/jpeg, image/webp, image/avif, .avif"
         style={{ display: 'none' }}
       />
 
@@ -132,7 +132,7 @@ export default function ImageUpload({ imageInfo, onImageSelect, onImageRemove })
             </svg>
           </div>
           <div className="upload-text-main">Drop screen moiré photo here</div>
-          <div className="upload-text-sub">Supports PNG, JPEG, WebP (up to 20MB)</div>
+          <div className="upload-text-sub">Supports PNG, JPEG, WebP, AVIF (up to 20MB)</div>
           
           <div className="upload-actions-row" onClick={e => e.stopPropagation()}>
             <button className="btn btn-sm" onClick={handleBrowseClick}>

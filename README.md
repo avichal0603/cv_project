@@ -1,8 +1,10 @@
 # Screen Moiré Removal — Fine-Detail Preservation System
+**Course**: CSM043 - Computer Vision Practical  
+**Student**: Avichal Yadav (Roll No: 2501667, MTech Computer Science)  
 
 A complete local system for removing moiré patterns from photographs of computer screens while preserving meaningful visual information such as small text, thin lines, UI elements, and edges.
 
-Built as a Computer Vision academic assignment with 4 restoration algorithms, quantitative evaluation, and an interactive web dashboard.
+Built as a Computer Vision academic assignment featuring a 1-click interactive web dashboard, multi-scale adaptive demoiréing, and quantitative evaluation.
 
 ![Architecture](docs/architecture-overview.png)
 
@@ -55,10 +57,11 @@ Navigate to **http://localhost:5173**
 
 | Algorithm | Type | Key Strength | Typical Speed |
 |-----------|------|-------------|---------------|
-| **Gaussian Smoothing** | Spatial baseline | Simple, fast | ~5ms |
-| **FFT Notch Filter** | Frequency domain | Targets periodic interference | ~80ms |
-| **Wavelet Denoising** | Multi-scale | Preserves structure | ~15ms |
-| **Edge-Aware Adaptive** | Hybrid bilateral+guided | Best detail preservation | ~40ms |
+| **Adaptive Demoiré Filter** | Multi-scale spatial-frequency | Full moiré removal + fine text preservation | ~0.5s–0.8s |
+| **Edge-Aware Adaptive** | Hybrid bilateral+guided | Gradient-directed edge preservation | ~35ms |
+| **FFT Notch Filter** | Frequency domain | Targets periodic harmonic peaks | ~45ms |
+| **Wavelet Denoising** | Multi-scale | Preserves low-freq base structures | ~12ms |
+| **Gaussian Smoothing** | Spatial baseline | Simple, fast baseline | ~3ms |
 
 ### Interactive Dashboard
 - 🖱️ **Drag-and-drop** image upload (PNG, JPEG, WebP, max 20MB)

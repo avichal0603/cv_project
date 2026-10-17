@@ -2,51 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 export const DEFAULT_ALGORITHMS = [
   {
-    id: 'gaussian',
-    name: 'Gaussian Smoothing',
-    description: 'Baseline spatial low-pass filter. Establishes how much moiré is removed by simple blurring and how much detail is lost.',
-    parameters: [
-      { name: 'kernel_size', label: 'Kernel Size', type: 'int', min: 3, max: 31, default: 5, step: 2, description: 'Size of the Gaussian blur kernel (odd integer).' },
-      { name: 'sigma', label: 'Sigma', type: 'float', min: 0.5, max: 10.0, default: 1.5, step: 0.1, description: 'Standard deviation of the Gaussian filter.' },
-      { name: 'luminance_only', label: 'Luminance Only', type: 'bool', default: true, description: 'Blur only the luminance channel (Y in YCrCb) to preserve color sharpness.' }
-    ]
-  },
-  {
-    id: 'fft',
-    name: 'FFT Notch Filter',
-    description: 'Detects periodic interference peaks in the 2D frequency domain and suppresses them with Gaussian notch reject filters.',
-    parameters: [
-      { name: 'notch_radius', label: 'Notch Radius', type: 'int', min: 5, max: 50, default: 15, step: 1, description: 'Radius of the notch filter applied to each detected peak.' },
-      { name: 'suppression_strength', label: 'Suppression Strength', type: 'float', min: 0.0, max: 1.0, default: 0.95, step: 0.05, description: 'How strongly detected peaks are attenuated (1.0 = full removal).' },
-      { name: 'min_frequency', label: 'Min Frequency', type: 'int', min: 10, max: 100, default: 20, step: 5, description: 'Minimum distance from DC center to consider as interference.' },
-      { name: 'auto_detect', label: 'Auto-Detect Peaks', type: 'bool', default: true, description: 'Automatically detect periodic frequency peaks.' }
-    ]
-  },
-  {
-    id: 'wavelet',
-    name: 'Wavelet Denoising',
-    description: 'Multi-level discrete wavelet decomposition with coefficient thresholding to remove interference while preserving structure.',
-    parameters: [
-      { name: 'wavelet', label: 'Wavelet Type', type: 'select', options: ['db1', 'db2', 'db4', 'sym4', 'coif1', 'bior1.3'], default: 'db4', description: 'Mother wavelet filter bank to use.' },
-      { name: 'level', label: 'Decomposition Level', type: 'int', min: 1, max: 5, default: 3, step: 1, description: 'Number of wavelet decomposition levels.' },
-      { name: 'threshold_mode', label: 'Threshold Mode', type: 'select', options: ['soft', 'hard'], default: 'soft', description: 'Soft thresholding shrinks coefficients; hard sets them to zero.' },
-      { name: 'threshold_value', label: 'Threshold Value', type: 'float', min: 5.0, max: 100.0, default: 30.0, step: 1.0, description: 'Threshold magnitude for wavelet coefficient suppression.' },
-      { name: 'luminance_only', label: 'Luminance Only', type: 'bool', default: true, description: 'Apply wavelet denoising only to the luminance channel.' }
-    ]
-  },
-  {
-    id: 'edge_aware',
-    name: 'Edge-Aware Adaptive',
-    description: 'Bilateral + guided filtering with edge-aware blending. Aggressive filtering in flat regions, gentle near edges and text.',
-    parameters: [
-      { name: 'filter_strength', label: 'Filter Strength', type: 'int', min: 1, max: 100, default: 50, step: 1, description: 'Overall filtering intensity (scales bilateral and guided filter parameters).' },
-      { name: 'edge_threshold', label: 'Edge Threshold', type: 'int', min: 10, max: 200, default: 80, step: 5, description: 'Gradient magnitude threshold for edge detection.' },
-      { name: 'bilateral_d', label: 'Bilateral Diameter', type: 'int', min: 5, max: 15, default: 9, step: 2, description: 'Pixel neighborhood diameter for bilateral filter.' },
-      { name: 'bilateral_sigma_color', label: 'Bilateral Color Sigma', type: 'float', min: 25, max: 150, default: 75, step: 5, description: 'Filter sigma in color space.' },
-      { name: 'bilateral_sigma_space', label: 'Bilateral Space Sigma', type: 'float', min: 25, max: 150, default: 75, step: 5, description: 'Filter sigma in coordinate space.' },
-      { name: 'guided_radius', label: 'Guided Filter Radius', type: 'int', min: 2, max: 16, default: 8, step: 1, description: 'Radius of the guided filter window.' },
-      { name: 'guided_eps', label: 'Guided Filter Eps', type: 'float', min: 0.001, max: 1.0, default: 0.04, step: 0.005, description: 'Regularization parameter for edge preservation.' }
-    ]
+    id: 'auto_demoire',
+    name: 'Adaptive Screen Demoiré Filter',
+    description: 'Multi-scale adaptive filtering algorithm designed to eliminate screen moiré artifacts while preserving sharp typography and line borders.',
+    parameters: []
   }
 ];
 
@@ -175,9 +134,9 @@ export function useImageProcessor() {
       return;
     }
 
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/avif'];
     if (!allowedTypes.includes(file.type)) {
-      setError(`Invalid file type (${file.type || 'unknown'}). Please upload PNG, JPEG, or WebP.`);
+      setError(`Invalid file type (${file.type || 'unknown'}). Please upload PNG, JPEG, WebP, or AVIF.`);
       return;
     }
 
@@ -219,9 +178,9 @@ export function useImageProcessor() {
       return;
     }
 
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/avif'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Reference image: Invalid type. Only PNG, JPEG, and WebP supported.');
+      setError('Reference image: Invalid type. Only PNG, JPEG, WebP, and AVIF supported.');
       return;
     }
 

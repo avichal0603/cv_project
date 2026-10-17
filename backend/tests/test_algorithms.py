@@ -168,7 +168,7 @@ class TestEdgeAwareFiltering:
 
 
 class TestPipelineDispatch:
-    @pytest.mark.parametrize("algo", ["gaussian", "fft", "wavelet", "edge_aware"])
+    @pytest.mark.parametrize("algo", ["gaussian", "fft", "wavelet", "edge_aware", "auto_demoire"])
     def test_pipeline_dispatch(self, sample_bgr_image, algo):
         res = process_image(sample_bgr_image, algo)
         assert "image" in res
@@ -185,6 +185,6 @@ class TestPipelineDispatch:
 
     def test_algorithm_registry(self):
         algos = get_available_algorithms()
-        assert len(algos) == 4
+        assert len(algos) == 5
         ids = {a["id"] for a in algos}
-        assert ids == {"gaussian", "fft", "wavelet", "edge_aware"}
+        assert ids == {"gaussian", "fft", "wavelet", "edge_aware", "auto_demoire"}

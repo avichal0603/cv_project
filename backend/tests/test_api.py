@@ -55,16 +55,17 @@ class TestAlgorithmEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
-        assert len(data) == 4
+        assert len(data) == 5
         ids = [item["id"] for item in data]
         assert "gaussian" in ids
         assert "fft" in ids
         assert "wavelet" in ids
         assert "edge_aware" in ids
+        assert "auto_demoire" in ids
 
 
 class TestProcessEndpoint:
-    @pytest.mark.parametrize("algo", ["gaussian", "fft", "wavelet", "edge_aware"])
+    @pytest.mark.parametrize("algo", ["gaussian", "fft", "wavelet", "edge_aware", "auto_demoire"])
     def test_process_success(self, client, sample_image_base64, algo):
         payload = {
             "image": sample_image_base64,

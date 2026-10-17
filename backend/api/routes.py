@@ -205,7 +205,7 @@ async def compare_algorithms(req: CompareRequest):
     input_img = decode_base64_image(req.image)
     ref_img = decode_base64_image(req.reference_image) if req.reference_image else None
 
-    available_keys = ["gaussian", "fft", "wavelet", "edge_aware"]
+    available_keys = [algo["id"] for algo in get_available_algorithms()]
     algos_to_run = req.algorithms if req.algorithms else available_keys
     param_map = req.params or {}
 

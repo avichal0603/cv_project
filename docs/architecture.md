@@ -67,41 +67,45 @@ The **Screen Moiré Demoireing Studio** is a decoupled client-server application
 ```
 Input Image (H x W x 3 uint8)
      |
-     +--> [gaussian.py]   --> YCrCb / RGB Gaussian kernel convolution
+     +--> [Adaptive Demoiré Engine] --> Multi-Scale Filter (Subpixel Phase + Spatial Pyramid + Edge Retention)
      |
-     +--> [fft_filter.py] --> 2D FFT -> Log Magnitude -> Peak Detection -> Gaussian Notch Reject -> IFFT
+     +--> [gaussian.py]             --> YCrCb / RGB Gaussian kernel baseline
      |
-     +--> [wavelet.py]    --> 2D DWT -> Multi-level Pyramidal Subbands -> Detail Thresholding -> 2D IDWT
+     +--> [fft_filter.py]           --> 2D FFT -> Log Magnitude -> Peak Detection -> Gaussian Notch Reject -> IFFT
      |
-     +--> [edge_aware.py] --> Sobel/Canny Edge Retention Mask -> Bilateral Filter -> Guided Filter -> Alpha Blend
+     +--> [wavelet.py]              --> 2D DWT -> Multi-level Pyramidal Subbands -> Detail Thresholding -> 2D IDWT
+     |
+     +--> [edge_aware.py]           --> Sobel/Canny Edge Retention Mask -> Bilateral Filter -> Guided Filter -> Alpha Blend
 ```
 
-### 3.1 Gaussian Smoothing Baseline (`gaussian.py`)
+### 3.1 Adaptive Multi-Scale Demoiré Filter
+- **Primary Engine**: Integrated multi-scale spatial-frequency restoration pipeline providing automated 1-click moiré reduction.
+- **Subpixel Phase Decomposition**: Reorganizes spatial samples into subpixel phase channels to decouple chromatic Bayer CFA sampling offsets without discarding phase alignment.
+- **Multi-Scale Spatial-Frequency Filtering**: Decomposes features across spatial resolution scales, using dilated receptive fields to capture non-linear, long-wavelength rainbow waves alongside fine subpixel ripples.
+- **Adaptive Typography & Edge Reconstruction**: High-contrast character strokes, code syntax, and UI borders are adaptively preserved to prevent blurring.
+- **Hardware Acceleration**: Automatically utilizes Apple Silicon Metal Performance Shaders (`mps`) or CPU fallback for sub-second execution (~0.6s–0.8s).
+
+### 3.2 Gaussian Smoothing Baseline (`gaussian.py`)
 - Provides the lower-bound reference for naive spatial low-pass filtering.
 - Implements luminance-isolated filtering in $Y\text{CrCb}$ color space ($Y$ channel blurred, chromatic channels untouched) to prevent color bleed across sharp text boundaries.
 
-### 3.2 2D FFT Notch Reject Filter (`fft_filter.py`)
+### 3.3 2D FFT Notch Reject Filter (`fft_filter.py`)
 - Performs 2D Fast Fourier Transform on floating-point luminance.
 - Centered magnitude spectrum: $S(u, v) = \log(1 + |\mathcal{F}\{I\}|)$.
 - Automated peak discovery excludes low frequencies ($r < r_{\text{min}}$) to prevent wiping out legitimate structural content.
 - Generates Gaussian notch reject attenuation masks at detected coordinates $(u_k, v_k)$ and their conjugate mirrors $(-u_k, -v_k)$.
 - Inverse 2D FFT reconstructs the space-domain signal with strict $[0, 255]$ dynamic range clamping.
 
-### 3.3 Multi-Scale Wavelet Denoising (`wavelet.py`)
+### 3.4 Multi-Scale Wavelet Denoising (`wavelet.py`)
 - Employs 2D Discrete Wavelet Transform (`pywt.wavedec2`) supporting Daubechies (`db1`–`db4`), Symlets (`sym4`), Coiflets (`coif1`), and Biorthogonal (`bior1.3`) wavelets.
 - Decomposes into multiresolution approximation $LL_J$ and directional detail subbands $(LH_j, HL_j, HH_j)$ for scales $j = 1, \dots, J$.
 - Applies soft or hard thresholding to directional detail coefficients containing high-frequency beating patterns while preserving low-frequency coarse structures.
 
-### 3.4 Hybrid Edge-Aware Filter (`edge_aware.py`)
+### 3.5 Hybrid Edge-Aware Filter (`edge_aware.py`)
 - Computes Sobel gradient magnitude: $G(x, y) = \sqrt{G_x^2 + G_y^2}$.
 - Computes multi-scale Canny edge map smoothed by a Gaussian kernel.
 - Generates a soft edge-retention mask: $M(x, y) \in [0, 1]$.
-- Applies Bilateral Filtering for edge-respecting tone smoothing:
-  $$I_{\text{bilat}}(p) = \frac{1}{W_p} \sum_{q \in \Omega} I(q) f_r(\|I(p) - I(q)\|) g_s(\|p - q\|)$$
-- Applies $O(N)$ Guided Filtering (`guided_filter_manual`) using the grayscale luminance as the structural guide image.
-- Blends filtered regions with original inputs using the edge mask:
-  $$I_{\text{out}} = M \odot I_{\text{orig}} + (1 - M) \odot I_{\text{filtered}}$$
-- High-contrast characters and thin grid lines maintain $M \approx 1$ (zero blur), while flat screen areas with moiré ripple receive full smoothing ($M \approx 0$).
+- Applies Bilateral Filtering and $O(N)$ Guided Filtering with structural alpha blending.
 
 ---
 
