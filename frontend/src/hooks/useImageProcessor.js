@@ -9,11 +9,46 @@ export const DEFAULT_ALGORITHMS = [
   }
 ];
 
-/** Convert a File to a base64 data-URI string */
-const fileToBase64 = (file) => {
+/** Convert a File to an optimized base64 string that stays comfortably under Vercel's 4.5MB payload limit */
+const fileToBase64 = (file, maxDim = 1600) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const { naturalWidth: w, naturalHeight: h } = img;
+        // If image is already smaller than maxDim and under 2MB, use original base64
+        if (w <= maxDim && h <= maxDim && file.size <= 2 * 1024 * 1024) {
+          resolve(reader.result);
+          return;
+        }
+
+        // Scale down to maxDim while preserving aspect ratio
+        let targetW = w;
+        let targetH = h;
+        if (Math.max(w, h) > maxDim) {
+          if (w > h) {
+            targetW = maxDim;
+            targetH = Math.round((h * maxDim) / w);
+          } else {
+            targetH = maxDim;
+            targetW = Math.round((w * maxDim) / h);
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        // Convert to high-quality JPEG base64 (typically ~250-400 KB, safely under 4.5MB limit)
+        const optimizedB64 = canvas.toDataURL('image/jpeg', 0.90);
+        resolve(optimizedB64);
+      };
+      img.onerror = () => resolve(reader.result);
+      img.src = reader.result;
+    };
     reader.onerror = (e) => reject(new Error('Failed to read file: ' + e));
     reader.readAsDataURL(file);
   });
