@@ -107,7 +107,7 @@ def process_image(
     if algo_key in ("auto_demoire", "uhdm", "default"):
         filtered, uhdm_meta = demoire_uhdm(
             img,
-            max_dimension=int(params.get("max_dimension", 1536)),
+            max_dimension=int(params.get("max_dimension", 768)),
             device_pref=str(params.get("device", "auto")),
         )
         metadata.update(uhdm_meta)

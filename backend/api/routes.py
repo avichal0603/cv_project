@@ -91,6 +91,15 @@ def decode_base64_image(b64_string: str) -> np.ndarray:
             detail="Failed to decode image from provided base64 data",
         )
 
+    # Memory safeguard: Cap input dimensions to 1920px to prevent OOM on 512MB free tier
+    h, w = image.shape[:2]
+    max_side = max(h, w)
+    if max_side > 1920:
+        scale = 1920.0 / max_side
+        new_w = max(32, int(w * scale))
+        new_h = max(32, int(h * scale))
+        image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
     return image
 
 
@@ -99,8 +108,12 @@ def encode_image_to_base64(
     img_format: str = "png",
     include_data_uri: bool = True,
 ) -> str:
-    """Encode an OpenCV BGR image into a base64 string."""
-    success, buffer = cv2.imencode(f".{img_format}", image)
+    """Encode an OpenCV BGR image into a base64 string with optimized compression."""
+    if img_format == "png":
+        success, buffer = cv2.imencode(".png", image, [int(cv2.IMWRITE_PNG_COMPRESSION), 3])
+    else:
+        success, buffer = cv2.imencode(f".{img_format}", image)
+
     if not success:
         raise RuntimeError("Failed to encode image to buffer")
 

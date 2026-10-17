@@ -110,59 +110,82 @@ def pad_image_for_uhdm(tensor_img, device):
 
 def demoire_uhdm(
     image: np.ndarray,
-    max_dimension: int = 1536,
+    max_dimension: int = 768,
     device_pref: str = "auto",
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
-    """Run UHDM demoiréing on a BGR image.
+    """Run UHDM demoiréing on a BGR image with memory protection for cloud deployments.
 
     Args:
         image: BGR uint8 input image.
-        max_dimension: Downsample images larger than this for fast inference (or 0 for full resolution).
+        max_dimension: Downsample images larger than this for fast, low-memory inference.
         device_pref: 'auto', 'mps', 'cpu', or 'cuda'.
 
     Returns:
         (restored_bgr, metadata)
     """
+    import gc
     import torch
 
     orig_h, orig_w = image.shape[:2]
     img_to_process = image
 
-    # If image exceeds max_dimension and max_dimension > 0, downsample for efficient local inference
+    # Cap maximum dimension to 768 on memory-constrained servers (Render free tier 512MB RAM)
+    effective_max_dim = int(os.environ.get("MAX_INFERENCE_DIM", max_dimension or 768))
+    if effective_max_dim > 768:
+        effective_max_dim = 768
+
     rescaled = False
     scale_factor = 1.0
-    if max_dimension > 0 and max(orig_h, orig_w) > max_dimension:
-        scale_factor = max_dimension / float(max(orig_h, orig_w))
-        new_w = int(orig_w * scale_factor)
-        new_h = int(orig_h * scale_factor)
+    if max(orig_h, orig_w) > effective_max_dim:
+        scale_factor = effective_max_dim / float(max(orig_h, orig_w))
+        new_w = max(32, int(orig_w * scale_factor))
+        new_h = max(32, int(orig_h * scale_factor))
         img_to_process = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
         rescaled = True
 
     h, w = img_to_process.shape[:2]
     device = get_inference_device(device_pref)
-    model, device = get_uhdm_model(device)
 
-    # Convert BGR [0, 255] to RGB float32 [0.0, 1.0] Tensor
-    img_rgb = cv2.cvtColor(img_to_process, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-    tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).unsqueeze(0).to(device)
+    try:
+        model, device = get_uhdm_model(device)
 
-    padded_tensor, (h_pad, h_odd_pad, w_pad, w_odd_pad) = pad_image_for_uhdm(tensor, device)
+        # Convert BGR [0, 255] to RGB float32 [0.0, 1.0] Tensor
+        img_rgb = cv2.cvtColor(img_to_process, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+        tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).unsqueeze(0).to(device)
 
-    t0 = time.perf_counter()
-    with torch.no_grad():
-        out_1, _, _ = model(padded_tensor)
+        padded_tensor, (h_pad, h_odd_pad, w_pad, w_odd_pad) = pad_image_for_uhdm(tensor, device)
 
-        # Unpad
-        if h_pad != 0:
-            out_1 = out_1[:, :, h_pad : -h_odd_pad if h_odd_pad > 0 else None, :]
-        if w_pad != 0:
-            out_1 = out_1[:, :, :, w_pad : -w_odd_pad if w_odd_pad > 0 else None]
+        t0 = time.perf_counter()
+        with torch.inference_mode():
+            out_1, _, _ = model(padded_tensor)
 
-    inf_time = time.perf_counter() - t0
+            # Unpad
+            if h_pad != 0:
+                out_1 = out_1[:, :, h_pad : -h_odd_pad if h_odd_pad > 0 else None, :]
+            if w_pad != 0:
+                out_1 = out_1[:, :, :, w_pad : -w_odd_pad if w_odd_pad > 0 else None]
 
-    # Convert tensor back to BGR uint8
-    out_np = out_1.squeeze(0).permute(1, 2, 0).clamp(0.0, 1.0).cpu().numpy()
-    out_bgr = cv2.cvtColor((out_np * 255.0).astype(np.uint8), cv2.COLOR_RGB2BGR)
+        inf_time = time.perf_counter() - t0
+
+        # Convert tensor back to BGR uint8
+        out_np = out_1.squeeze(0).permute(1, 2, 0).clamp(0.0, 1.0).cpu().numpy()
+        out_bgr = cv2.cvtColor((out_np * 255.0).astype(np.uint8), cv2.COLOR_RGB2BGR)
+
+        # Explicitly release intermediate PyTorch tensors
+        del tensor, padded_tensor, out_1, out_np
+        gc.collect()
+
+    except (MemoryError, RuntimeError) as err:
+        # Graceful fallback: If deep model exceeds available RAM, run edge-aware filter
+        try:
+            from processing.edge_aware import edge_aware_filter
+        except ImportError:
+            from backend.processing.edge_aware import edge_aware_filter
+
+        t0 = time.perf_counter()
+        out_bgr = edge_aware_filter(img_to_process, filter_strength=80, edge_threshold=40)
+        inf_time = time.perf_counter() - t0
+        device = f"{device} (fallback: edge-aware)"
 
     # If we downscaled, resize back to original resolution
     if rescaled:

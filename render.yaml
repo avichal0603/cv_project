@@ -5,7 +5,9 @@ services:
     region: oregon
     plan: free
     buildCommand: pip install --extra-index-url https://download.pytorch.org/whl/cpu -r backend/requirements.txt
-    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1 --limit-concurrency 4
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.12
+      - key: MAX_INFERENCE_DIM
+        value: "768"
