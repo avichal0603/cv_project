@@ -55,7 +55,7 @@ export default function App() {
         <div className="header-actions">
           <div
             className={`status-badge ${backendStatus}`}
-            title={backendStatus === 'online' ? 'System backend running on localhost:8000' : 'Backend offline'}
+            title={backendStatus === 'online' ? 'System backend connected and active' : 'Connecting to backend... (If sleeping, may take ~30s)'}
           >
             <span className="status-dot"></span>
             <span>System: {backendStatus.toUpperCase()}</span>

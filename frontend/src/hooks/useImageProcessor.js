@@ -381,7 +381,7 @@ export function useImageProcessor() {
         const isNetworkErr = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
         if (isNetworkErr) {
           setBackendStatus('offline');
-          setError('Cannot connect to backend at http://localhost:8000. Please ensure the FastAPI server is running.');
+          setError('Cannot connect to backend. If the cloud backend was sleeping, it takes ~30 seconds to wake up — please retry in a moment.');
         } else {
           setError(`Processing failed: ${err.message}`);
         }
