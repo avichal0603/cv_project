@@ -94,8 +94,10 @@ def process_image(
     img = _ensure_bgr_uint8(image)
     params = params.copy() if params else {}
     algo_key = algorithm.lower().strip()
+    if algo_key in ("adaptive", "uhdm", "default", "mix", "deep_learning"):
+        algo_key = "auto_demoire"
 
-    if algo_key not in ALGORITHM_METADATA and algo_key not in ("uhdm", "default"):
+    if algo_key not in ALGORITHM_METADATA:
         raise ValueError(f"Unknown algorithm: {algorithm}. Available: {list(ALGORITHM_METADATA.keys())}")
 
     start_time = time.perf_counter()
