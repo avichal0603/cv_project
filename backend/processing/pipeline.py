@@ -13,13 +13,13 @@ try:
     from processing.fft_filter import fft_notch_filter, create_spectrum_visualization
     from processing.wavelet import wavelet_filter, SUPPORTED_WAVELETS
     from processing.edge_aware import edge_aware_filter
-    from processing.adaptive_model import demoire_adaptive as demoire_uhdm
+    from processing.adaptive_model import demoire_adaptive
 except ImportError:
     from backend.processing.gaussian import gaussian_filter, _ensure_bgr_uint8
     from backend.processing.fft_filter import fft_notch_filter, create_spectrum_visualization
     from backend.processing.wavelet import wavelet_filter, SUPPORTED_WAVELETS
     from backend.processing.edge_aware import edge_aware_filter
-    from backend.processing.adaptive_model import demoire_adaptive as demoire_uhdm
+    from backend.processing.adaptive_model import demoire_adaptive
 
 ALGORITHM_METADATA = {
     "auto_demoire": {
@@ -105,10 +105,12 @@ def process_image(
     metadata: Dict[str, Any] = {"algorithm": algo_key}
 
     if algo_key in ("auto_demoire", "uhdm", "default"):
-        filtered, uhdm_meta = demoire_uhdm(
+        engine_choice = "uhdm" if algo_key == "uhdm" else str(params.get("engine", "auto"))
+        filtered, uhdm_meta = demoire_adaptive(
             img,
             max_dimension=int(params.get("max_dimension", 768)),
             device_pref=str(params.get("device", "auto")),
+            engine=engine_choice,
         )
         metadata.update(uhdm_meta)
 
