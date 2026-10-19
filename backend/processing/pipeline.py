@@ -108,7 +108,7 @@ def process_image(
         engine_choice = "uhdm" if algo_key == "uhdm" else str(params.get("engine", "auto"))
         filtered, uhdm_meta = demoire_adaptive(
             img,
-            max_dimension=int(params.get("max_dimension", 768)),
+            max_dimension=int(params.get("max_dimension", 1536)),
             device_pref=str(params.get("device", "auto")),
             engine=engine_choice,
         )

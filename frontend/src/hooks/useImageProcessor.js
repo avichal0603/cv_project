@@ -9,21 +9,22 @@ export const DEFAULT_ALGORITHMS = [
   }
 ];
 
-/** Convert a File to an optimized base64 string that stays comfortably under Vercel's 4.5MB payload limit */
-const fileToBase64 = (file, maxDim = 1600) => {
+/** Convert a File to a high-fidelity base64 string, preserving original lossless pixels */
+const fileToBase64 = (file, maxDim = 2048) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
+      // If file is already under 3.5MB, use the untouched original base64
+      // This preserves 100% lossless subpixel details and color phase without any compression artifacts
+      if (file.size <= 3.5 * 1024 * 1024) {
+        resolve(reader.result);
+        return;
+      }
+
+      // For huge multi-megapixel camera photos (> 3.5MB), scale resolution cleanly
       const img = new Image();
       img.onload = () => {
         const { naturalWidth: w, naturalHeight: h } = img;
-        // If image is already smaller than maxDim and under 2MB, use original base64
-        if (w <= maxDim && h <= maxDim && file.size <= 2 * 1024 * 1024) {
-          resolve(reader.result);
-          return;
-        }
-
-        // Scale down to maxDim while preserving aspect ratio
         let targetW = w;
         let targetH = h;
         if (Math.max(w, h) > maxDim) {
@@ -40,11 +41,21 @@ const fileToBase64 = (file, maxDim = 1600) => {
         canvas.width = targetW;
         canvas.height = targetH;
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, targetW, targetH);
 
-        // Convert to high-quality JPEG base64 (typically ~250-400 KB, safely under 4.5MB limit)
-        const optimizedB64 = canvas.toDataURL('image/jpeg', 0.90);
-        resolve(optimizedB64);
+        // Prefer high-quality WebP or PNG over lossy JPEG to prevent 4:2:0 chroma blur on text
+        try {
+          const webpB64 = canvas.toDataURL('image/webp', 0.96);
+          if (webpB64.startsWith('data:image/webp')) {
+            resolve(webpB64);
+            return;
+          }
+        } catch {
+          // fallback
+        }
+        resolve(canvas.toDataURL('image/png'));
       };
       img.onerror = () => resolve(reader.result);
       img.src = reader.result;

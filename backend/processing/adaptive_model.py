@@ -129,10 +129,15 @@ def demoire_uhdm(
     orig_h, orig_w = image.shape[:2]
     img_to_process = image
 
-    # Cap maximum dimension to 768 on memory-constrained servers (Render free tier 512MB RAM)
-    effective_max_dim = int(os.environ.get("MAX_INFERENCE_DIM", max_dimension or 768))
-    if effective_max_dim > 768:
-        effective_max_dim = 768
+    device = get_inference_device(device_pref)
+    is_gpu = str(device) in ("mps", "cuda:0")
+
+    # Resolution handling:
+    # On GPU (MPS/CUDA): allow up to 1536 for maximum fine-detail preservation
+    # On CPU: default to 1024 (or MAX_INFERENCE_DIM) for high detail with controlled memory
+    default_cap = 1536 if is_gpu else 1024
+    env_cap = os.environ.get("MAX_INFERENCE_DIM")
+    effective_max_dim = int(env_cap) if env_cap else min(max_dimension or default_cap, default_cap)
 
     rescaled = False
     scale_factor = 1.0
@@ -144,10 +149,12 @@ def demoire_uhdm(
         rescaled = True
 
     h, w = img_to_process.shape[:2]
-    device = get_inference_device(device_pref)
 
     try:
         model, device = get_uhdm_model(device)
+
+        if not is_gpu:
+            torch.set_num_threads(1)
 
         # Convert BGR [0, 255] to RGB float32 [0.0, 1.0] Tensor
         img_rgb = cv2.cvtColor(img_to_process, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
@@ -204,40 +211,31 @@ def demoire_uhdm(
 
 def demoire_adaptive(
     image: np.ndarray,
-    max_dimension: int = 768,
+    max_dimension: int = 1536,
     device_pref: str = "auto",
     engine: str = "auto",
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Adaptive Multi-Scale Screen Demoiréing Engine.
 
-    Dynamically selects optimal processing pipeline:
-    - On cloud free-tier (512MB RAM without GPU), runs the high-speed multi-scale
-      spatial-frequency guided filter (30MB RAM, ~60ms, rock-solid stability).
-    - When hardware acceleration (Apple Silicon MPS / CUDA) is available or neural engine
-      is explicitly requested, runs the deep UHDM neural network.
+    Executes the multi-scale deep restoration pipeline with subpixel phase alignment
+    on both GPU and CPU, with automatic graceful fallback if memory is constrained.
     """
     import os
     import time
+
+    # Always run the full multi-scale neural restoration model by default for high-detail demoiréing
+    if engine.lower() != "fast_fallback" and not os.environ.get("FORCE_FAST_ENGINE"):
+        try:
+            return demoire_uhdm(image, max_dimension=max_dimension, device_pref=device_pref)
+        except (MemoryError, RuntimeError, Exception):
+            pass
+
+    # Fallback only if model execution fails or fast_fallback is explicitly requested
     try:
         from processing.edge_aware import edge_aware_filter
     except ImportError:
         from backend.processing.edge_aware import edge_aware_filter
 
-    force_neural = (
-        engine.lower() in ("neural", "uhdm", "deep")
-        or os.environ.get("FORCE_NEURAL_MODEL", "").lower() in ("1", "true")
-    )
-
-    device = get_inference_device(device_pref)
-    use_neural = force_neural or (str(device) in ("mps", "cuda:0") and not os.environ.get("FORCE_FAST_ENGINE"))
-
-    if use_neural:
-        try:
-            return demoire_uhdm(image, max_dimension=min(max_dimension or 640, 640), device_pref=device_pref)
-        except Exception:
-            pass
-
-    # High-Performance Multi-Scale Adaptive Filter (30MB RAM, ~60ms, 100% stable on Render free-tier)
     t0 = time.perf_counter()
     restored = edge_aware_filter(
         image,
@@ -251,7 +249,7 @@ def demoire_adaptive(
 
     h, w = image.shape[:2]
     metadata = {
-        "device": f"{device} (adaptive edge-preserving engine)",
+        "device": "fallback (edge-aware engine)",
         "processing_time_sec": round(elapsed, 4),
         "input_resolution": f"{w}x{h}",
         "processed_resolution": f"{w}x{h}",
