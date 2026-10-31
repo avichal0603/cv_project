@@ -486,6 +486,89 @@ html, body, #root {
   background-color: var(--error-bg);
 }
 
+/* Sample Moiré Presets */
+.sample-presets-container {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.sample-presets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sample-presets-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.sample-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.sample-preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.sample-preset-card:hover {
+  border-color: var(--accent-color);
+  background-color: var(--bg-surface-hover);
+  transform: translateY(-1px);
+}
+
+.sample-preset-thumb {
+  width: 100%;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 2px;
+  background-color: #000;
+  display: block;
+}
+
+.sample-preset-info {
+  display: flex;
+  flex-direction: column;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.sample-preset-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.sample-preset-tag {
+  font-size: 8.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
 /* Algorithm Selection Cards */
 .algorithm-list {
   display: flex;

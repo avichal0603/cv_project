@@ -1,10 +1,31 @@
 import React, { useRef, useState } from 'react';
 import CameraCapture from './CameraCapture';
 
+const SAMPLE_PRESETS = [
+  { id: 'uhdm_curved', label: 'Curved Moiré', desc: 'UHDM Real', src: '/samples/uhdm_0002_moire.jpg' },
+  { id: 'uhdm_text', label: 'Screen Text', desc: 'Typography', src: '/samples/uhdm_0025_moire.jpg' },
+  { id: 'macro', label: 'Monitor Macro', desc: 'Subpixel', src: '/samples/screen_moire_macro.jpg' },
+  { id: 'small_text', label: 'Small Text', desc: 'Fine Detail', src: '/samples/01_small_text_moire.png' },
+  { id: 'code', label: 'Code Editor', desc: 'IDE Lines', src: '/samples/04_code_editor_moire.png' },
+  { id: 'portrait', label: 'Portrait', desc: 'Screen Photo', src: '/samples/bentham_screen_moire.png' },
+];
+
 export default function ImageUpload({ imageInfo, onImageSelect, onImageRemove }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
   const fileInputRef = useRef(null);
+
+  const handleSelectSample = async (sample) => {
+    try {
+      const res = await fetch(sample.src);
+      const blob = await res.blob();
+      const ext = sample.src.endsWith('.png') ? '.png' : '.jpg';
+      const file = new File([blob], `${sample.id}${ext}`, { type: blob.type });
+      onImageSelect(file);
+    } catch (e) {
+      console.error('Failed to load sample image:', e);
+    }
+  };
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -147,6 +168,30 @@ export default function ImageUpload({ imageInfo, onImageSelect, onImageRemove })
           </div>
         </div>
       )}
+
+      <div className="sample-presets-container">
+        <div className="sample-presets-header">
+          <span>⚡ Sample Moiré Images</span>
+          <span className="sample-presets-hint">Click to test instantly</span>
+        </div>
+        <div className="sample-presets-grid">
+          {SAMPLE_PRESETS.map((sample) => (
+            <button
+              key={sample.id}
+              type="button"
+              className="sample-preset-card"
+              onClick={() => handleSelectSample(sample)}
+              title={`${sample.label} (${sample.desc})`}
+            >
+              <img src={sample.src} alt={sample.label} className="sample-preset-thumb" />
+              <div className="sample-preset-info">
+                <span className="sample-preset-title">{sample.label}</span>
+                <span className="sample-preset-tag">{sample.desc}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <CameraCapture
         isOpen={cameraModalOpen}
